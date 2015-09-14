@@ -1,6 +1,10 @@
 ﻿using System;
-using Rebus;
+using System.Threading.Tasks;
+using Rebus.Bus;
+using Rebus.Handlers;
+using Rebus.Sagas;
 using WebOrder.Messages;
+#pragma warning disable 1998
 
 namespace WebOrder.Handlers
 {
@@ -13,29 +17,30 @@ namespace WebOrder.Handlers
             _bus = bus;
         }
 
-        public override void ConfigureHowToFindSaga()
+        protected override void CorrelateMessages(ICorrelationConfig<OrderSagaData> config)
         {
-            Incoming<CancelOrder>(p => p.OrderId).CorrelatesWith(d => d.OrderId);
-            Incoming<FinalizeOrder>(p => p.OrderId).CorrelatesWith(d => d.OrderId);
+            config.Correlate<PlaceOrder>(m => m.OrderId, d => d.OrderId);
+            config.Correlate<CancelOrder>(m => m.OrderId, d => d.OrderId);
+            config.Correlate<FinalizeOrder>(m => m.OrderId, d => d.OrderId);
         }
 
-        public void Handle(PlaceOrder message)
+        public async Task Handle(PlaceOrder message)
         {
             Data.OrderId = message.OrderId;
             Data.Product = message.Product;
 
-            _bus.Defer(TimeSpan.FromSeconds(10), new FinalizeOrder {OrderId = Data.OrderId});
+            await _bus.Defer(TimeSpan.FromSeconds(10), new FinalizeOrder {OrderId = Data.OrderId});
 
             Console.WriteLine("Order {0} placed", Data.OrderId);
         }
 
-        public void Handle(CancelOrder message)
+        public async Task Handle(CancelOrder message)
         {
             Console.WriteLine("Order {0} cancelled!", Data.OrderId);
             MarkAsComplete();
         }
 
-        public void Handle(FinalizeOrder message)
+        public async Task Handle(FinalizeOrder message)
         {
             Console.WriteLine("Finalizing order {0} - there's no way back now!", Data.OrderId);
             MarkAsComplete();

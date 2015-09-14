@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Threading;
-using Rebus.Configuration;
+using Rebus.Activation;
+using Rebus.Config;
 using Rebus.Logging;
-using Rebus.Transports.Sql;
+using Rebus.Persistence.SqlServer;
+using Rebus.Transport.SqlServer;
 using WebOrder.Handlers;
 using WebOrder.Messages;
 
@@ -14,16 +16,14 @@ namespace WebOrder
 
         static void Main()
         {
-            using (var adapter = new BuiltinContainerAdapter())
+            using (var adapter = new BuiltinHandlerActivator())
             {
                 adapter.Register(() => new OrderSaga(adapter.Bus));
 
                 var bus = Configure.With(adapter)
                     .Logging(l => l.ColoredConsole(minLevel: LogLevel.Warn))
-                    .Transport(t => t.UseSqlServer(Conn, "RebusMessages", "OrderQueue", "Error").EnsureTableIsCreated())
-                    .Sagas(s => s.StoreInSqlServer(Conn, "OrderSagas", "OrderSagasIndex").EnsureTablesAreCreated())
-                    .Timeouts(t => t.StoreInSqlServer(Conn, "RebusTimeouts").EnsureTableIsCreated())
-                    .CreateBus()
+                    .Transport(t => t.UseSqlServer(Conn, "RebusMessages", "OrderQueue"))
+                    .Sagas(s => s.StoreInSqlServer(Conn, "OrderSagas", "OrderSagasIndex"))
                     .Start();
 
                 while (true)
