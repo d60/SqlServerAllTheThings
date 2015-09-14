@@ -2,6 +2,7 @@
 using System.Linq;
 using HybridDb;
 using HybridTjek.Model;
+using HybridTjek.Util;
 
 namespace HybridTjek
 {
@@ -11,10 +12,7 @@ namespace HybridTjek
 
         static void Main()
         {
-            var configurator = new LambdaHybridDbConfigurator(c =>
-            {
-                c.Document<Order>();
-            });
+            var configurator = new LambdaHybridDbConfigurator(c => { });
 
             using (var documentStore = DocumentStore.Create(ConnectionString, configurator))
             {
@@ -47,11 +45,15 @@ namespace HybridTjek
 
         static void CreateOrder(IDocumentStore documentStore)
         {
+            var id = Guid.NewGuid().ToString();
+
+            Console.WriteLine("Creating order with ID {0}", id);
+
             using (var session = documentStore.OpenSession())
             {
                 var order = new Order
                 {
-                    Id = Guid.NewGuid().ToString(),
+                    Id = id,
 
                     OrderLines = Enumerable.Range(0, Random.Next(3) + 1)
                         .Select(i => new OrderLine
@@ -83,10 +85,10 @@ namespace HybridTjek
             },
             new Address
             {
-                Street = "Tuborg Boulevard",
-                HouseNumber = "12",
-                PostalCode = "2900",
-                City = "Hellerup"
+                Street = "Sdr. Ringgade",
+                HouseNumber = "53",
+                PostalCode = "8000",
+                City = "Aarhus"
             },
             new Address
             {
@@ -94,6 +96,13 @@ namespace HybridTjek
                 HouseNumber = "5",
                 PostalCode = "2200",
                 City = "Nørrebronx"
+            },
+            new Address
+            {
+                Street = "Spobjergvej",
+                HouseNumber = "52",
+                PostalCode = "8220",
+                City = "Brabrand"
             }
         };
 

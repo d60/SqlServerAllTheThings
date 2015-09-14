@@ -57,8 +57,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CustomSerializer.cs" />
-    <Compile Include="Ex.cs" />
+    <Compile Include="Util\CustomSerializer.cs" />
+    <Compile Include="Util\Extensions.cs" />
     <Compile Include="Model\Address.cs" />
     <Compile Include="Model\Order.cs" />
     <Compile Include="Model\OrderLine.cs" />

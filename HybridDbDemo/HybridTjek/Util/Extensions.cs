@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace HybridTjek
+namespace HybridTjek.Util
 {
-    public static class Ex
+    public static class Extensions
     {
         public static T ItemFrom<T>(this Random random, IEnumerable<T> items)
         {

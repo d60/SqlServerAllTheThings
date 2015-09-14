@@ -3,7 +3,7 @@ using System.Text;
 using HybridDb;
 using Newtonsoft.Json;
 
-namespace HybridTjek
+namespace HybridTjek.Util
 {
     public class CustomSerializer : ISerializer
     {
