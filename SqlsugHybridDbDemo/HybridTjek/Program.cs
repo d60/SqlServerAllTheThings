@@ -1,69 +1,67 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net.Sockets;
 using HybridDb;
+using HybridTjek.Model;
 
 namespace HybridTjek
 {
     class Program
     {
-        const string ConnectionString = "server=.;database=sqlsug;trusted_connection=true";
+        const string ConnectionString = "server=.\\SQLEXPRESS; database=sqlsatt; trusted_connection=true";
 
         static void Main()
         {
-            var documentStore = new DocumentStore(ConnectionString);
+            var configurator = new LambdaHybridDbConfigurator(c =>
+            {
+                c.Document<Order>();
+            });
 
-            documentStore.Configuration.UseSerializer(new DefaultJsonSerializer());
+            using (var documentStore = DocumentStore.Create(ConnectionString, configurator))
+            {
+                //Random.Next(10).Times(() =>
+                //{
+                //    CreateOrder(documentStore);
+                //});
 
-            documentStore.Document<Order>()
-                .Project(d => d.DeliveryAddress.HouseNumber)
-                .Project(d => d.DeliveryAddress.PostalCode)
-                .Project(d => d.DeliveryAddress.City);
+                //QuerySomeOrders(documentStore);
 
-            documentStore.MigrateSchemaToMatchConfiguration();
-
-            CreateSomeOrders(documentStore);
-
-            QuerySomeOrders(documentStore);
+                Console.WriteLine("Press ENTER to quit");
+                Console.ReadLine();
+            }
         }
 
-        static void QuerySomeOrders(DocumentStore documentStore)
+        static void QuerySomeOrders(IDocumentStore documentStore)
         {
             const string postalCodeToLookFor = "8700";
 
             using (var session = documentStore.OpenSession())
             {
                 var orders = from order in session.Query<Order>()
-                    where order.DeliveryAddress.PostalCode == postalCodeToLookFor
-                    select order;
+                             where order.DeliveryAddress.PostalCode == postalCodeToLookFor
+                             select order;
 
                 Console.WriteLine(@"Found the following orders for {0}:
 {1}", postalCodeToLookFor, string.Join(Environment.NewLine, orders));
             }
         }
 
-        static void CreateSomeOrders(DocumentStore documentStore)
+        static void CreateOrder(IDocumentStore documentStore)
         {
             using (var session = documentStore.OpenSession())
             {
                 var order = new Order
                 {
-                    Id = Guid.NewGuid(),
-                    OrderLines = new List<OrderLine>
-                    {
-                        new OrderLine {ItemName = "beer", Quantity = 6},
-                        new OrderLine {ItemName = "nuts", Quantity = 2},
-                        new OrderLine {ItemName = "big tv", Quantity = 1},
-                    },
-                    DeliveryAddress = new Address
-                    {
-                        Street = "Torsmark",
-                        HouseNumber = "6",
-                        PostalCode = "8700",
-                        City = "Horsens"
-                    }
+                    Id = Guid.NewGuid().ToString(),
+
+                    OrderLines = Enumerable.Range(0, Random.Next(3) + 1)
+                        .Select(i => new OrderLine
+                        {
+                            ItemName = Random.ItemFrom(ItemNames),
+                            Quantity = Random.Next(5) + 1
+                        })
+                        .ToList(),
+
+                    DeliveryAddress = Random.ItemFrom(DeliveryAddresses)
                 };
 
                 session.Store(order);
@@ -71,38 +69,34 @@ namespace HybridTjek
                 session.SaveChanges();
             }
         }
-    }
 
-    public class Order
-    {
-        public Guid Id { get; set; }
-        public List<OrderLine> OrderLines { get; set; }
-        public Address DeliveryAddress { get; set; }
-        public override string ToString()
-        {
-            return string.Format("Order {0}: {1} => {2}", Id, string.Join(", ", OrderLines), DeliveryAddress);
-        }
-    }
+        static readonly string[] ItemNames = { "Beer", "Nuts", "Big TV", "Burger", "Pizza" };
 
-    public class Address
-    {
-        public string Street { get; set; }
-        public string HouseNumber { get; set; }
-        public string PostalCode { get; set; }
-        public string City { get; set; }
-        public override string ToString()
+        static readonly Address[] DeliveryAddresses =
         {
-            return string.Format("{0} {1}, {2} {3}", Street, HouseNumber, PostalCode, City);
-        }
-    }
+            new Address
+            {
+                Street = "Torsmark",
+                HouseNumber = "4",
+                PostalCode = "8700",
+                City = "Horsens"
+            },
+            new Address
+            {
+                Street = "Tuborg Boulevard",
+                HouseNumber = "12",
+                PostalCode = "2900",
+                City = "Hellerup"
+            },
+            new Address
+            {
+                Street = "Ryesgade",
+                HouseNumber = "5",
+                PostalCode = "2200",
+                City = "Nørrebronx"
+            }
+        };
 
-    public class OrderLine
-    {
-        public string ItemName { get; set; }
-        public int Quantity { get; set; }
-        public override string ToString()
-        {
-            return string.Format("{0} x {1}", Quantity, ItemName);
-        }
+        static readonly Random Random = new Random(DateTime.Now.GetHashCode());
     }
 }
