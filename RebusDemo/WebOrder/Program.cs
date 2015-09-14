@@ -10,7 +10,7 @@ namespace WebOrder
 {
     class Program
     {
-        const string Conn = "server=.;database=sqlsug;trusted_connection=true";
+        const string Conn = "server=.\\SQLEXPRESS; database=sqlsatt; trusted_connection=true";
 
         static void Main()
         {
