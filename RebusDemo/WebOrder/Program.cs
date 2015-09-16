@@ -40,7 +40,7 @@ namespace WebOrder
                     {
                         OrderId =  orderId,
                         Product = text
-                    });
+                    }).Wait();
 
                     Thread.Sleep(3000);
 
@@ -54,7 +54,7 @@ namespace WebOrder
                     bus.SendLocal(new CancelOrder
                     {
                         OrderId = orderId
-                    });
+                    }).Wait();
 
                     Thread.Sleep(3000);
                 }
