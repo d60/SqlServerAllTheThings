@@ -12,9 +12,14 @@ namespace CirqusDemo.Views
         {
             ItemCounts = new Dictionary<string, int>();
         }
+
         public string Id { get; set; }
+
         public long LastGlobalSequenceNumber { get; set; }
+
         public Dictionary<string, int> ItemCounts { get; set; }
+
+        public HashSet<string> NamesOfRemovedItems { get; set; }
 
         public void Handle(IViewContext context, ItemAdded domainEvent)
         {
@@ -30,8 +35,6 @@ namespace CirqusDemo.Views
         {
             ItemCounts[domainEvent.ItemName] -= domainEvent.Quantity;
         }
-
-        public HashSet<string> NamesOfRemovedItems { get; set; }
 
         public void Handle(IViewContext context, ShipmentAddressAdded domainEvent)
         {
