@@ -18,9 +18,9 @@ namespace WebOrder
         {
             using (var adapter = new BuiltinHandlerActivator())
             {
-                adapter.Register(() => new OrderSaga(adapter.Bus));
+                adapter.Register((bus, context) => new OrderSaga(bus));
 
-                var bus = Configure.With(adapter)
+                Configure.With(adapter)
                     .Logging(l => l.ColoredConsole(minLevel: LogLevel.Warn))
                     .Transport(t => t.UseSqlServer(Conn, "RebusMessages", "OrderQueue"))
                     .Sagas(s => s.StoreInSqlServer(Conn, "OrderSagas", "OrderSagasIndex"))
@@ -36,9 +36,9 @@ namespace WebOrder
 
                     var orderId = Guid.NewGuid();
 
-                    bus.SendLocal(new PlaceOrder
+                    adapter.Bus.SendLocal(new PlaceOrder
                     {
-                        OrderId =  orderId,
+                        OrderId = orderId,
                         Product = text
                     }).Wait();
 
@@ -51,7 +51,7 @@ namespace WebOrder
 
                     Console.WriteLine("Cancelling...");
 
-                    bus.SendLocal(new CancelOrder
+                    adapter.Bus.SendLocal(new CancelOrder
                     {
                         OrderId = orderId
                     }).Wait();
